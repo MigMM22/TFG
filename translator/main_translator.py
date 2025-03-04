@@ -25,7 +25,6 @@ class MainTranslator(ParentTranslator):
             match(str(operation["gate"])):
                 case "H":
                     self.code_openQASM.append(self.gate_translator.translate_H(operation))
-
                 case "Y":
                     self.code_openQASM.append(self.gate_translator.translate_Y(operation))
                 case "X":
@@ -34,20 +33,20 @@ class MainTranslator(ParentTranslator):
                     self.code_openQASM.append(self.gate_translator.translate_Z(operation))
                 # case "R":
                 #     gate_translator.translate_R(operation)
-                # case "U":
-                #     gate_translator.translate_U(operation)
+                case gate if gate.startswith("U("):
+                    self.code_openQASM.append(self.gate_translator.translate_U(operation))
                 # case "P":
                 #     gate_translator.translate_P(operation)
                 # case "XY":
                 #     gate_translator.translate_XY(operation)
-                # case "RY":
-                #     gate_translator.translate_RY(operation)
-                # case "RX":
-                #     gate_translator.translate_RX(operation)
+                case gate if gate.startswith("RY("):
+                    self.code_openQASM.append(self.gate_translator.translate_RY(operation))
+                case gate if gate.startswith("RX("):
+                    self.code_openQASM.append(self.gate_translator.translate_RX(operation))
+                case gate if gate.startswith("RZ("):
+                    self.code_openQASM.append(self.gate_translator.translate_RZ(operation))
                 # case "ZZ":
-                #     gate_translator.translate_ZZ(operation)
-                # case "RZ":
-                #     gate_translator.translate_RZ(operation)
+                #     gate_translator.translate_ZZ(operation)                
                 # case "U1":
                 #     gate_translator.translate_U1(operation)
                 # case "U2":
@@ -60,8 +59,8 @@ class MainTranslator(ParentTranslator):
                 #     gate_translator.translate_XX(operation)
                 # case "RootPhase":
                 #     gate_translator.translate_RoothPhase(operation)
-                # case "SWAP":
-                #     gate_translator.translate_SWAP(operation)
+                case "SWAP":
+                    self.code_openQASM.append(self.gate_translator.translate_SWAP(operation))
                 # case "SqrtSWAP":
                 #     gate_translator.translate_SqrtSWAP(operation)
                 # case "iSWAP":
@@ -73,8 +72,7 @@ class MainTranslator(ParentTranslator):
                 # case "SqrtX":
                 #     gate_translator.translate_SqrtX(operation)
                 case "MEASURE":
-                    self.code_openQASM.append(self.gate_translator.translate_MEASURE(operation))
-                    
+                    self.code_openQASM.append(self.gate_translator.translate_MEASURE(operation))                    
                 # case "BARRIER":
                 #     gate_translator.translate_BARRIER(operation)
                 case _:
