@@ -2,7 +2,48 @@ from translator.parent_translator import ParentTranslator
 class GateTranslator(ParentTranslator):
     def __init__(self):
         super().__init__()
-    
+
+    def translate(self, gate_name, target, control, anticontrol, c_control, c_anticontrol):
+        c_translation = ""
+        end_translation = ""
+        translation = ""        
+        q_translation = ""
+        ctrls_amount = 0
+        antictrls_amount = 0
+
+        for qbit in control:
+            q_translation += f"{self.qbit_reg_name}[{qbit}], "
+            ctrls_amount += 1
+
+        for qbit in anticontrol:
+            q_translation += f"{self.qbit_reg_name}[{qbit}], "
+            antictrls_amount += 1
+        
+        q_translation = f"{gate_name} {q_translation}"
+        q_translation += f"{self.qbit_reg_name}{target};"
+
+        if(antictrls_amount > 0):
+            q_translation = f"negctrl({antictrls_amount}) @ " + q_translation
+        
+        if(ctrls_amount > 0):
+            q_translation = f"ctrl({ctrls_amount}) @ " + q_translation
+                
+        c_translation = ""
+                
+        for cbit in c_control: 
+            c_translation +=  f"({self.cbit_reg_name}[{cbit}] == 1) && "
+        for cbit in c_anticontrol:
+            c_translation += f"({self.cbit_reg_name}[{cbit}] == 0) && " 
+        c_translation = c_translation.rstrip(' && ')
+
+        if len(c_translation) > 0:
+            end_translation = "}"
+            c_translation = f"if({c_translation}) {{ "
+                  
+            
+        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        return translation
+
     def translate_H(self, operation):
         target = operation["targets"]
         c_targets = operation["c_targets"]
@@ -13,65 +54,8 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         gate_name = "h"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
         
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)   
         return translation
 
     def translate_Y(self, operation):
@@ -84,65 +68,7 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         gate_name = "y"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
         return translation
 
     def translate_X(self, operation): 
@@ -155,67 +81,10 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
         
         gate_name = "x"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
 
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)   
         return translation
-
+          
     def translate_Z(self, operation):
         target = operation["targets"]
         c_targets = operation["c_targets"]
@@ -226,65 +95,7 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         gate_name = "z"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
         return translation
 
     def translate_R(self, operation):
@@ -318,65 +129,7 @@ class GateTranslator(ParentTranslator):
         
         gate_name = f"U({angle_strings[0]}, {angle_strings[1]}, {angle_strings[2]})"
         
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
         return translation     
 
     def translate_XY(self, operation):
@@ -402,65 +155,7 @@ class GateTranslator(ParentTranslator):
         angle = str(operation["gate"]).replace("RX(", "").replace(")", "")
 
         gate_name = f"ry({angle})"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)   
         return translation
 
     def translate_RX(self, operation):
@@ -475,65 +170,7 @@ class GateTranslator(ParentTranslator):
         angle = str(operation["gate"]).replace("RX(", "").replace(")", "")
 
         gate_name = f"rx({angle})"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol) 
         return translation
 
     def translate_ZZ(self, operation):
@@ -559,65 +196,7 @@ class GateTranslator(ParentTranslator):
         angle = str(operation["gate"]).replace("RX(", "").replace(")", "")
 
         gate_name = f"rz({angle})"
-        q_translation = f"{gate_name} {self.qbit_reg_name}{target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""        
-        
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
-
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{self.qbit_reg_name}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
         return translation
 
     def translate_U1(self, operation):
