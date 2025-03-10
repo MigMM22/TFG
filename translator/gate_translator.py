@@ -208,7 +208,20 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        angles = str(operation["gate"]).replace("U1(", "").replace(")", "")
+        # angles_part will now be "45,60,90"
+
+        # 2. Split the string by the comma "," delimiter:
+        angle_strings = angles.split(',')
+        # angle_strings will be a list: ['45', '60', '90']
+
+        # 3. Convert each angle string to an integer (or float if needed):
+        
+        gate_name = f"u1({angle_strings[0]})"
+        
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
+
+        return translation
 
     def translate_U2(self, operation):
         target = operation["targets"]
@@ -219,7 +232,20 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        angles = str(operation["gate"]).replace("U2(", "").replace(")", "")
+        # angles_part will now be "45,60,90"
+
+        # 2. Split the string by the comma "," delimiter:
+        angle_strings = angles.split(',')
+        # angle_strings will be a list: ['45', '60', '90']
+
+        # 3. Convert each angle string to an integer (or float if needed):
+        
+        gate_name = f"u2({angle_strings[0]}, {angle_strings[1]})"
+        
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)  
+
+        return translation
 
     def translate_U3(self, operation):
         target = operation["targets"]
@@ -230,7 +256,20 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        angles = str(operation["gate"]).replace("U3(", "").replace(")", "")
+        # angles_part will now be "45,60,90"
+
+        # 2. Split the string by the comma "," delimiter:
+        angle_strings = angles.split(',')
+        # angle_strings will be a list: ['45', '60', '90']
+
+        # 3. Convert each angle string to an integer (or float if needed):
+        
+        gate_name = f"U({angle_strings[0]}, {angle_strings[1]}, {angle_strings[2]})"
+        
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol) 
+
+        return translation 
 
     def translate_YY(self, operation):
         target = operation["targets"]
@@ -275,66 +314,10 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         gate_name = f"swap"
-        target = f"{self.qbit_reg_name}[{target[0]}], {self.qbit_reg_name}[{target[1]}]"
-        q_translation = f"{gate_name} {target};"
-        c_translation = ""
-        end_translation = ""
-        translation = ""  
+        target = f"[{target[0]}], {self.qbit_reg_name}[{target[1]}]"
 
-        if((len(control) > 0) | (len(anticontrol) > 0)):
-            q_translation = ""
-            control_value = ""
-            ctrl = ""
-            anticontrol_value = ""
-            negctrl = ""
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)
 
-            if(len(control) > 0):            
-                control = list(control)
-                for value in control:
-                    control_value = f"{self.qbit_reg_name}[{value}], {control_value}"               
-                ctrl = f"ctrl({len(control)}) @ "
-               
-            if(len(anticontrol) > 0):
-                anticontrol = list(anticontrol)
-                for value in anticontrol:
-                    anticontrol_value = f"{self.qbit_reg_name}[{value}], {anticontrol_value}"
-                negctrl = f"negctrl({len(anticontrol)}) @ "
-                # translation = f"{negctrl} {gate_name} {anticontrol_value}{self.qbit_reg_name}{target};"
-            
-            q_translation = f"{negctrl}{ctrl}{gate_name} {anticontrol_value}{control_value}{target};"
-            # return q_translation
-
-        if((len(c_control) > 0) | (len(c_anticontrol) > 0)):
-            c_control_translation = ""
-            c_anticontrol_translation = ""
-
-            if(len(c_control) == 1):            
-                c_control_value = c_control.pop()
-                c_control_translation = f"({self.cbit_reg_name}[{c_control_value}] == 1)"
-                
-            elif(len(c_control) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_control_translation = c_control_translation + f"({self.cbit_reg_name}[{value}] == 1) && "                
-                c_control_translation = c_control_translation.rstrip(' && ')
-                c_control_translation = f"({c_control_translation})"
-            
-            if(len(c_anticontrol) == 1):                    
-                c_anticontrol_value = c_anticontrol.pop()
-                c_anticontrol_translation = f"({self.cbit_reg_name}[{c_anticontrol_value}] == 0)" 
-
-            elif(len(c_anticontrol) > 1):                
-                c_control = list(c_control)
-                for value in c_control:
-                    c_anticontrol_translation = c_anticontrol_translation + f"({self.cbit_reg_name}[{value}] == 0) && "                
-                c_anticontrol_translation = c_anticontrol_translation.rstrip(' && ')
-                c_anticontrol_translation = f"({c_anticontrol_translation})"                
-            c_translation = f"{c_control_translation} && {c_anticontrol_translation}"
-            c_translation = c_translation.rstrip(' && ')
-            end_translation = f"}}"
-            c_translation = f"if({c_translation}) {{ " 
-            
-        translation =  f"{c_translation}{q_translation} {end_translation}"   
         return translation
 
     def translate_SqrtSWAP(self, operation):
@@ -346,7 +329,12 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        gate_name = f"pow(0.5) @ swap"
+        target = f"[{target[0]}], {self.qbit_reg_name}[{target[1]}]"
+
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)
+
+        return translation
 
     def translate_iSWAP(self, operation):
         target = operation["targets"]
@@ -390,7 +378,11 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        gate_name = f"pow(0.5) @ x"
+        
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol)
+
+        return translation
 
     def translate_MEASURE(self, operation):
         target = operation["targets"]
