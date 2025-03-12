@@ -399,12 +399,6 @@ class GateTranslator(ParentTranslator):
         return translation
     
     def translate_BARRIER(self, operation):
-        target = operation["targets"]
-        c_targets = operation["c_targets"]
-        output = operation["outputs"]
-        control = operation["controls"]
-        anticontrol = operation["anticontrols"]
-        c_control = operation["c_controls"]
-        c_anticontrol = operation["c_anticontrols"]
-
-        self.code_openQASM.append()
+        
+        translation = "barrier " + self.qbit_reg_name + ";"
+        return translation
