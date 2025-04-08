@@ -1,0 +1,25 @@
+import qsimov as qj
+qg = qj.QGate(2, 0, "CustGate")
+qg.add_operation("H", targets=1)
+qg.add_operation("X", targets=[1])
+qc = qj.QCircuit(4, 3, "Teleportation", ancilla=(0, 0))
+
+qc.add_operation("H", targets=[1])
+qc.add_operation("X", targets=[2], controls=[0], anticontrols=[1], c_controls={0,1}, c_anticontrols = 2)
+qc.add_operation(qg, targets=[2,3])
+# Aqui es donde trabajamos con el qubit Q que queremos enviar.
+# Se le aplica la puerta pasada como parámetro.
+#qc.add_operation(gate, targets=0)
+# Una vez terminado todo lo que queremos hacerle al QuBit,
+# procedemos a preparar el envio
+# Se aplica una puerta C-NOT sobre Q (control) y B (objetivo).
+qc.add_operation("X", targets=1, controls=0)
+# Se aplica una puerta Hadamard sobre Q.
+qc.add_operation("H", targets=[0])
+qc.add_operation("BARRIER")
+qc.add_operation("sqrtSWAP", targets = [1,2], controls = 0)
+qc.add_operation("U(2,4,5)", targets=[2], controls = [1], c_controls = [1])
+qc.add_operation("RX(45)", targets=[2], controls=[0,1])
+qc.add_operation("MEASURE", targets=(0, 1), outputs=(0, 1))
+qc.add_operation("X", targets=2, c_controls={0,1}, c_anticontrols = 2)
+qc.add_operation("Z", targets=2, c_controls=0)

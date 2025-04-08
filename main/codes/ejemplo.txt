@@ -1,18 +1,72 @@
 import qsimov as qj
+qg = qj.QGate(2, 0, "CustGate")
+qg.add_operation("H", targets=1)
+qg.add_operation("X", targets=[1])
+qc = qj.QCircuit(4, 3, "Teleportation", ancilla=(0, 0))
+qc.add_operation(qg, targets=[2,3])
 
-qc = qj.QCircuit(3, 2, "Teleportation", ancilla=(0, 0))
-qc.add_operation("H", targets=[1])
-qc.add_operation("X", targets=[2], controls=[0], anticontrols=[1])
-# Aqui es donde trabajamos con el qubit Q que queremos enviar.
-# Se le aplica la puerta pasada como parámetro.
-#qc.add_operation(gate, targets=0)
-# Una vez terminado todo lo que queremos hacerle al QuBit,
-# procedemos a preparar el envio
-# Se aplica una puerta C-NOT sobre Q (control) y B (objetivo).
-qc.add_operation("X", targets=1, controls=0)
-# Se aplica una puerta Hadamard sobre Q.
-qc.add_operation("H", targets=[0])
 
-qc.add_operation("MEASURE", targets=(0, 1), outputs=(0, 1))
-qc.add_operation("X", targets=2, c_controls={0,1})
-qc.add_operation("Z", targets=2, c_controls=0)
+def translate(self, gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom = False):
+        c_translation = ""
+        end_translation = ""
+        translation = ""        
+        q_translation = ""
+        ctrls_amount = 0
+        antictrls_amount = 0
+
+        if not isCustom:
+            
+            for qbit in control:
+                q_translation += f"{self.qbit_reg_name}[{qbit}], "
+                ctrls_amount += 1
+
+            for qbit in anticontrol:
+                q_translation += f"{self.qbit_reg_name}[{qbit}], "
+                antictrls_amount += 1
+            
+            q_translation = f"{gate_name} {q_translation}"
+            for tg in target:
+                if "swap" in str(gate_name):
+                    
+                    q_translation += f"{self.qbit_reg_name}{target}"
+                    break
+    
+                q_translation += f"{self.qbit_reg_name}[{tg}], "
+            q_translation = q_translation.rstrip(", ")
+            q_translation += ";"
+
+        else:
+            target = str(target).strip("[]")
+            for qbit in control:
+                q_translation += f"{self.qbit_reg_name}{qbit}, "
+                ctrls_amount += 1
+
+            for qbit in anticontrol:
+                q_translation += f"{self.qbit_reg_name}{qbit}, "
+                antictrls_amount += 1
+            q_translation = f"{gate_name} {q_translation}"
+            q_translation += f"{self.qbit_reg_name}{target};"
+        
+        
+
+        if(antictrls_amount > 0):
+            q_translation = f"negctrl({antictrls_amount}) @ " + q_translation
+        
+        if(ctrls_amount > 0):
+            q_translation = f"ctrl({ctrls_amount}) @ " + q_translation
+                
+        c_translation = ""
+                
+        for cbit in c_control: 
+            c_translation +=  f"({self.cbit_reg_name}[{cbit}] == 1) && "
+        for cbit in c_anticontrol:
+            c_translation += f"({self.cbit_reg_name}[{cbit}] == 0) && " 
+        c_translation = c_translation.rstrip(' && ')
+
+        if len(c_translation) > 0:
+            end_translation = "}"
+            c_translation = f"if({c_translation}) {{ "
+                  
+            
+        translation =  f"{c_translation}{q_translation} {end_translation}"   
+        return translation

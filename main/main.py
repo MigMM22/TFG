@@ -16,7 +16,7 @@ from translator.main_translator import MainTranslator
 
 
 parent_folder = MAIN_PARENT_PATH.replace("\\", "/") + "/main/codes/"
-filename = "ejemplo.txt"
+filename = "ejemplo1.txt"
 with open(parent_folder + filename , "r") as file:
     txt = file.read()
 
@@ -27,6 +27,6 @@ exec(txt, env)
 
 
 translator = MainTranslator()
-
+#HACER ANCILLA 
 print(translator.to_openqasm(env["qc"]))
 

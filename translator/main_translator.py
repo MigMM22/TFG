@@ -23,7 +23,7 @@ class MainTranslator(ParentTranslator):
   
         for operation in qc.get_operations():
             if(operation == "BARRIER"):
-                self.code_openQASM.append(self.gate_translator.translate_BARRIER(operation))  
+                self.code_openQASM.append(self.gate_translator.translate_BARRIER())  
                 continue
             
             match(str(operation["gate"])):
@@ -76,11 +76,9 @@ class MainTranslator(ParentTranslator):
                 case "SqrtX":
                     self.code_openQASM.append(self.gate_translator.translate_SqrtX(operation))
                 case "MEASURE":
-                    self.code_openQASM.append(self.gate_translator.translate_MEASURE(operation))                    
-                # case "BARRIER":
-                #     self.code_openQASM.append(self.gate_translator.translate_BARRIER(operation))  
+                    self.code_openQASM.append(self.gate_translator.translate_MEASURE(operation))                     
                 case _:
-                    continue
+                    self.code_openQASM.append(self.gate_translator.translate_custom_gate(operation))
 
         for line in self.code_openQASM:
             translation += line + "\n" 
