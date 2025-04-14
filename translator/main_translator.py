@@ -78,7 +78,9 @@ class MainTranslator(ParentTranslator):
                 case "MEASURE":
                     self.code_openQASM.append(self.gate_translator.translate_MEASURE(operation))                     
                 case _:
-                    self.code_openQASM.append(self.gate_translator.translate_custom_gate(operation))
+                    custom_gate_translation, custom_call = self.gate_translator.translate_custom_gate(operation)
+                    self.code_openQASM.append(custom_gate_translation)
+                    # self.code_openQASM.append(custom_call)
 
         for line in self.code_openQASM:
             translation += line + "\n" 

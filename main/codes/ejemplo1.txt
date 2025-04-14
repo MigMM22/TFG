@@ -23,3 +23,7 @@ qc.add_operation("RX(45)", targets=[2], controls=[0,1])
 qc.add_operation("MEASURE", targets=(0, 1), outputs=(0, 1))
 qc.add_operation("X", targets=2, c_controls={0,1}, c_anticontrols = 2)
 qc.add_operation("Z", targets=2, c_controls=0)
+
+
+
+    
