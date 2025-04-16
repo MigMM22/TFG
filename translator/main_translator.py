@@ -14,7 +14,8 @@ class MainTranslator(ParentTranslator):
         super().__init__()
         self.code_openQASM = []
         
-        self.gate_translator = GateTranslator()
+        
+        self.gate_translator = GateTranslator(self.code_openQASM)
         
     def to_openqasm(self, qc):
         translation = ""
@@ -49,26 +50,26 @@ class MainTranslator(ParentTranslator):
                     self.code_openQASM.append(self.gate_translator.translate_RX(operation))
                 case gate if gate.startswith("RZ("):
                     self.code_openQASM.append(self.gate_translator.translate_RZ(operation))
-                # case "ZZ":
-                #     gate_translator.translate_ZZ(operation)                
+                case gate if gate.startswith("ZZ("):
+                    self.code_openQASM.append(self.gate_translator.translate_ZZ(operation))                
                 case gate if gate.startswith("U1("):
                     self.code_openQASM.append(self.gate_translator.translate_U1(operation))
                 case gate if gate.startswith("U2("):
                     self.code_openQASM.append(self.gate_translator.translate_U2(operation))
                 case gate if gate.startswith("U3("):
                     self.code_openQASM.append(self.gate_translator.translate_U3(operation))
-                # case "YY":
-                #     gate_translator.translate_YY(operation)
-                # case "XX":
-                #     gate_translator.translate_XX(operation)
+                case gate if gate.startswith("YY("):
+                    self.code_openQASM.append(self.gate_translator.translate_YY(operation))
+                case gate if gate.startswith("XX("):
+                    self.code_openQASM.append(self.gate_translator.translate_XX(operation))
                 # case "RootPhase":
                 #     gate_translator.translate_RoothPhase(operation)
                 case "SWAP":
                     self.code_openQASM.append(self.gate_translator.translate_SWAP(operation))
                 case "SqrtSWAP":
                     self.code_openQASM.append(self.gate_translator.translate_SqrtSWAP(operation))
-                # case "iSWAP":
-                #     gate_translator.translate_iSWAP(operation)
+                case "iSWAP":
+                    self.code_openQASM.append(self.gate_translator.translate_iSWAP(operation))
                 # case "HalfDeutsch":
                 #     gate_translator.translate_HalfDeutsch(operation)
                 # case "fSWAP":
@@ -84,11 +85,17 @@ class MainTranslator(ParentTranslator):
 
         for line in self.code_openQASM:
             translation += line + "\n" 
+
+        ParentTranslator.custom_XX = False
+        ParentTranslator.custom_YY = False
+        ParentTranslator.custom_ZZ = False
+        ParentTranslator.custom_XY = False
+        ParentTranslator.custom_iSWAP = False
         return translation
 
     def start_code_openQASM(self, qbit = 0, cbit = 0):
         self.code_openQASM.append("OPENQASM 3;")
-        self.code_openQASM.append('include "stadgates.inc";')    
+        self.code_openQASM.append('include "stdgates.inc";')    
         self.code_openQASM.append(f"qubit[{qbit}] {self.qbit_reg_name};")
         self.code_openQASM.append(f"bit[{cbit}] {self.cbit_reg_name};")        
        

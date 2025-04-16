@@ -2,6 +2,7 @@ import qsimov as qj
 qg = qj.QGate(2, 0, "CustGate")
 qg.add_operation("H", targets=1)
 qg.add_operation("X", targets=[1])
+qg.add_operation("XX(1)", targets = [0,1])
 qc = qj.QCircuit(4, 3, "Teleportation", ancilla=(0, 0))
 
 qc.add_operation("H", targets=[1])
@@ -17,7 +18,12 @@ qc.add_operation("X", targets=1, controls=0)
 # Se aplica una puerta Hadamard sobre Q.
 qc.add_operation("H", targets=[0])
 qc.add_operation("BARRIER")
+
+qc.add_operation("YY(2)", targets = [0,1])
+qc.add_operation("ZZ(3)", targets = [0,1])
+qc.add_operation("ZZ(5)", targets = [0,1])
 qc.add_operation("sqrtSWAP", targets = [1,2], controls = 0)
+qc.add_operation("iSWAP", targets = [1,2], controls = 0)
 qc.add_operation("U(2,4,5)", targets=[2], controls = [1], c_controls = [1])
 qc.add_operation("RX(45)", targets=[2], controls=[0,1])
 qc.add_operation("MEASURE", targets=(0, 1), outputs=(0, 1))
