@@ -5,6 +5,8 @@ class ParentTranslator:
     custom_ZZ = False
     custom_XY = False
     custom_iSWAP = False
+    custom_fSWAP = False
+    custom_HalfDeutsch = False
 
     def __init__(self):
         self.qbit_reg_name = "q"
