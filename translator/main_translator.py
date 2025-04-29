@@ -36,8 +36,8 @@ class MainTranslator(ParentTranslator):
                     self.code_openQASM.append(self.gate_translator.translate_X(operation))
                 case "Z":
                     self.code_openQASM.append(self.gate_translator.translate_Z(operation))
-                # case gate if gate.startswith("R("):
-                #     self.code_openQASM.append(self.gate_translator.translate_R(operation))
+                case gate if gate.startswith("R("):
+                    self.code_openQASM.append(self.gate_translator.translate_R(operation))
                 case gate if gate.startswith("U("):
                     self.code_openQASM.append(self.gate_translator.translate_U(operation))
                 case gate if gate.startswith("P("):
@@ -62,8 +62,8 @@ class MainTranslator(ParentTranslator):
                     self.code_openQASM.append(self.gate_translator.translate_YY(operation))
                 case gate if gate.startswith("XX("):
                     self.code_openQASM.append(self.gate_translator.translate_XX(operation))
-                # case "RootPhase":
-                #     gate_translator.translate_RootPhase(operation)
+                case gate if gate.startswith("RootPhase("):
+                    self.code_openQASM.append(self.gate_translator.translate_RootPhase(operation))
                 case "SWAP":
                     self.code_openQASM.append(self.gate_translator.translate_SWAP(operation))
                 case "SqrtSWAP":
@@ -86,6 +86,7 @@ class MainTranslator(ParentTranslator):
         for line in self.code_openQASM:
             translation += line + "\n" 
 
+        ParentTranslator.custom_R = False
         ParentTranslator.custom_XX = False
         ParentTranslator.custom_YY = False
         ParentTranslator.custom_ZZ = False
@@ -93,6 +94,7 @@ class MainTranslator(ParentTranslator):
         ParentTranslator.custom_iSWAP = False
         ParentTranslator.custom_fSWAP = False
         ParentTranslator.custom_HalfDeutsch = False
+        custom_RootPhase = False
         return translation
 
     def start_code_openQASM(self, qbit = 0, cbit = 0):
