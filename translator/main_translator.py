@@ -94,7 +94,7 @@ class MainTranslator(ParentTranslator):
         ParentTranslator.custom_iSWAP = False
         ParentTranslator.custom_fSWAP = False
         ParentTranslator.custom_HalfDeutsch = False
-        custom_RootPhase = False
+        ParentTranslator.custom_RootPhase = False
         return translation
 
     def start_code_openQASM(self, qbit = 0, cbit = 0):
