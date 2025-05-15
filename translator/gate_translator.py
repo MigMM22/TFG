@@ -140,6 +140,7 @@ class GateTranslator(ParentTranslator):
     rz(-phi) q0;  
     rx(theta) q0; 
     rz(phi) q0; 
+    x q0;
 }}'''
 
             self.code_openQASM.insert(4,custom_R_gate)
@@ -178,14 +179,9 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         angles = str(operation["gate"]).replace("U(", "").replace(")", "")
-        # angles_part will now be "45,60,90"
-
-        # 2. Split the string by the comma "," delimiter:
+                
         angle_strings = angles.split(',')
-        # angle_strings will be a list: ['45', '60', '90']
-
-        # 3. Convert each angle string to an integer (or float if needed):
-        
+             
         gate_name = f"U({angle_strings[0]}, {angle_strings[1]}, {angle_strings[2]})"
         
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)  
@@ -211,7 +207,7 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        angle = str(operation["gate"]).replace("RX(", "").replace(")", "")
+        angle = str(operation["gate"]).replace("RY(", "").replace(")", "")
 
         gate_name = f"ry({angle})"
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)   
@@ -268,7 +264,7 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        angle = str(operation["gate"]).replace("RX(", "").replace(")", "")
+        angle = str(operation["gate"]).replace("RZ(", "").replace(")", "")
 
         gate_name = f"rz({angle})"
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)  
@@ -284,14 +280,9 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         angles = str(operation["gate"]).replace("U1(", "").replace(")", "")
-        # angles_part will now be "45,60,90"
-
-        # 2. Split the string by the comma "," delimiter:
+    
         angle_strings = angles.split(',')
-        # angle_strings will be a list: ['45', '60', '90']
-
-        # 3. Convert each angle string to an integer (or float if needed):
-        
+   
         gate_name = f"u1({angle_strings[0]})"
         
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)  
@@ -332,14 +323,9 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         angles = str(operation["gate"]).replace("U3(", "").replace(")", "")
-        # angles_part will now be "45,60,90"
 
-        # 2. Split the string by the comma "," delimiter:
         angle_strings = angles.split(',')
-        # angle_strings will be a list: ['45', '60', '90']
 
-        # 3. Convert each angle string to an integer (or float if needed):
-        
         gate_name = f"U({angle_strings[0]}, {angle_strings[1]}, {angle_strings[2]})"
         
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom) 
@@ -434,7 +420,7 @@ class GateTranslator(ParentTranslator):
             ParentTranslator.custom_RootPhase = True
             
         #Calculate the final angle
-        angle = 2 * np.pi / 2**angle
+        angle = 2 * np.pi / 2**int(angle)
         gate_name = f"RootPhase({angle})"
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
         return translation
@@ -451,7 +437,7 @@ class GateTranslator(ParentTranslator):
         gate_name = f"swap"
 
         
-        target = f"[{target[0]}], {self.qbit_reg_name}[{target[1]}]"
+        # target = f"[{target[0]}], {self.qbit_reg_name}[{target[1]}]"
 
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
 
@@ -491,7 +477,7 @@ class GateTranslator(ParentTranslator):
     s q1;
     h q0;
     cx q0, q1;
-    x q0;
+    cx q1, q0;
     h q1;
 }}'''
 
@@ -513,9 +499,10 @@ class GateTranslator(ParentTranslator):
 
         translation = ""
         custom_HalfDeutsch_gate = ""
+        angle = str(operation["gate"]).replace("HalfDeutsch(", "").replace(")", "")
 
         if not ParentTranslator.custom_HalfDeutsch:
-            custom_HalfDeutsch_gate = f'''gate HalfDeutsch q0 {{
+            custom_HalfDeutsch_gate = f'''gate HalfDeutsch(phi) q0 {{
     rz(-pi/4) q0;
     ry(2 * phi) q0;
     rz(-pi/4) q0;
@@ -524,7 +511,7 @@ class GateTranslator(ParentTranslator):
             self.code_openQASM.insert(4,custom_HalfDeutsch_gate)
             ParentTranslator.custom_HalfDeutsch = True
         
-        gate_name = f"HalfDeutsch"
+        gate_name = f"HalfDeutsch({angle})"
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
         return translation
 
@@ -572,13 +559,10 @@ class GateTranslator(ParentTranslator):
         target = operation["targets"]
         output = operation["outputs"]
         
-        
         translation = ""
 
-        for value in target:
-            translation = f"{translation}{self.cbit_reg_name}[{target[value]}] = measure {self.qbit_reg_name}[{output[value]}];\n" 
-            # openqasm_code = openqasm_code + "c[" + str(target[value]) + "] = measure q[" +  str(output[value]) + "];\n" 
-        
+        translation = f"{translation}{self.cbit_reg_name}{[*output]} = measure {self.qbit_reg_name}{[*target]};\n" 
+
         translation = translation.rstrip('\n')
         return translation
     

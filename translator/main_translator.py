@@ -12,13 +12,13 @@ from translator.gate_translator import GateTranslator
 class MainTranslator(ParentTranslator):
     def __init__(self):
         super().__init__()
-        self.code_openQASM = []
-        
-        
+        self.code_openQASM = []                
         self.gate_translator = GateTranslator(self.code_openQASM)
         
     def to_openqasm(self, qc):
+        self.code_openQASM = []
         translation = ""
+        self.gate_translator.code_openQASM = self.code_openQASM
         self.start_code_openQASM(qc.get_num_qubits(), qc.get_num_bits())
         
   
