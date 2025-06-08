@@ -9,6 +9,7 @@ class ParentTranslator:
     custom_fSWAP = False
     custom_HalfDeutsch = False
     custom_RootPhase = False
+    custom_gates = {}
 
     def __init__(self):
         self.qbit_reg_name = "q"

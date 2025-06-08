@@ -170,6 +170,18 @@ qc.add_operation("MEASURE", targets=(0,1), outputs=(0,1))
 executor = qj.Drewom()
 result_test = executor.execute(qc, 1000)
 ::
+-- XY ------ 2
+::
+import qsimov as qj
+
+qc = qj.QCircuit(2, 2, "Name",ancilla=(0, 0))
+
+qc.add_operation("XY(1)", targets=[0,1])
+qc.add_operation("MEASURE", targets=(0,1), outputs=(0,1))
+
+executor = qj.Drewom()
+result_test = executor.execute(qc, 1000)
+::
 -- RootPhase ------ 1
 ::
 import qsimov as qj

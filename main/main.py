@@ -16,7 +16,7 @@ from translator.main_translator import MainTranslator
 
 
 parent_folder = MAIN_PARENT_PATH.replace("\\", "/") + "/main/codes/"
-filename = "ejemplo.txt"
+filename = "ejemplo3.txt"
 with open(parent_folder + filename , "r") as file:
     txt = file.read()
 

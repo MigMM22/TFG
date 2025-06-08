@@ -22,10 +22,10 @@ def get_dict(input_list):
     return dict(counts)
 
 i = 0
-# codes = gates_codes.split("::")
+codes = gates_codes.split("::")
 # codes = gate_operations_codes.split("::")
-codes = deutsch_algorithm.split("::")
-
+# codes = deutsch_algorithm.split("::")
+print(qiskit.__version__)
 while i < len(codes):
     title = codes[i][:-2]
     amount_qubits = codes[i][-2]
@@ -39,7 +39,10 @@ while i < len(codes):
     # QSIMOV
     env = {}
     exec(code, env)
-    print(get_dict(env["result_test"]))
+    if "r" in title:
+        print(translator.to_openqasm(env["qc"]))
+    print("QSimov", get_dict(env["result_test"]))
+    
 
 
     # QISKIT
@@ -48,7 +51,7 @@ while i < len(codes):
     transpiled_circ = transpile(circ, backend)
     result = backend.run(transpiled_circ, shots=1000).result()
     counts = binary_counts = {format(int(k, 16), f"0{amount_qubits}b"): v for k, v in result.data()['counts'].items()}
-    print(counts)
+    print(f"Qiskit {counts}")
 
    
 

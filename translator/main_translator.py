@@ -42,8 +42,8 @@ class MainTranslator(ParentTranslator):
                     self.code_openQASM.append(self.gate_translator.translate_U(operation))
                 case gate if gate.startswith("P("):
                     self.code_openQASM.append(self.gate_translator.translate_P(operation))
-                # case "XY":
-                #     gate_translator.translate_XY(operation)
+                case gate if gate.startswith("XY("):
+                    self.code_openQASM.append(self.gate_translator.translate_XY(operation))
                 case gate if gate.startswith("RY("):
                     self.code_openQASM.append(self.gate_translator.translate_RY(operation))
                 case gate if gate.startswith("RX("):
@@ -95,13 +95,16 @@ class MainTranslator(ParentTranslator):
         ParentTranslator.custom_fSWAP = False
         ParentTranslator.custom_HalfDeutsch = False
         ParentTranslator.custom_RootPhase = False
+        ParentTranslator.custom_gates = {}
+
         return translation
 
     def start_code_openQASM(self, qbit = 0, cbit = 0):
-        self.code_openQASM.append("OPENQASM 3;")
+        self.code_openQASM.append("OPENQASM 3.0;")
         self.code_openQASM.append('include "stdgates.inc";')    
         self.code_openQASM.append(f"qubit[{qbit}] {self.qbit_reg_name};")
-        self.code_openQASM.append(f"bit[{cbit}] {self.cbit_reg_name};")        
+        self.code_openQASM.append(f"bit[{cbit}] {self.cbit_reg_name};") 
+        self.code_openQASM.append(f"")        
        
 
 

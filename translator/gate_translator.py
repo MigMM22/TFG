@@ -136,17 +136,15 @@ class GateTranslator(ParentTranslator):
         
 
         if not ParentTranslator.custom_R:
-            custom_R_gate = f'''gate R(theta, phi) q0 {{
-    rz(-phi) q0;  
-    rx(theta) q0; 
-    rz(phi) q0; 
-    x q0;
-}}'''
+            custom_R_gate = f'''gate r(theta, phi) q0 {{
+    U(theta, phi - π/2, -phi + π/2) q0; 
+}}
+'''
 
-            self.code_openQASM.insert(4,custom_R_gate)
+            self.code_openQASM.insert(5,custom_R_gate)
             ParentTranslator.custom_R = True
         
-        gate_name = f"R({angle[0]}, {angle[1]})"
+        gate_name = f"r({angle[0]}, {angle[1]})"
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
         return translation
 
@@ -196,7 +194,34 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        self.code_openQASM.append()
+        translation = ""
+        custom_XY_gate = ""
+        angle = str(operation["gate"]).replace("XY(", "").replace(")", "")
+
+        if not ParentTranslator.custom_XY:
+            custom_XY_gate = f'''gate XY(theta, beta) q0, q1 {{
+            rz(beta) q1;
+            rz(-pi/2) q0;
+            sx q0;
+            rz(pi/2) q0;
+            s q1;
+            cx q0, q1;
+            ry(theta/2) q0;
+            ry(theta/2) q1;
+            cx q0, q1;
+            sdg q1;
+            rz(-pi/2) q0;
+            sdg q0;
+            rz(pi/2) q0;
+            rz(-beta) q1;
+}}'''
+
+            self.code_openQASM.insert(5,custom_XY_gate)
+            ParentTranslator.custom_XY = True
+        
+        gate_name = f"XY({angle},0)"
+        translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
+        return translation
 
     def translate_RY(self, operation, isCustom = False):
         target = operation["targets"]
@@ -248,7 +273,7 @@ class GateTranslator(ParentTranslator):
     cx q0, q1;
 }}'''
 
-            self.code_openQASM.insert(4,custom_ZZ_gate)
+            self.code_openQASM.insert(5,custom_ZZ_gate)
             ParentTranslator.custom_ZZ = True
         
         gate_name = f"ZZ({angle})"
@@ -360,7 +385,7 @@ class GateTranslator(ParentTranslator):
     s q1;
 }}'''
 
-            self.code_openQASM.insert(4,custom_YY_gate)
+            self.code_openQASM.insert(5,custom_YY_gate)
             ParentTranslator.custom_YY = True
         
         gate_name = f"YY({angle})"
@@ -389,9 +414,10 @@ class GateTranslator(ParentTranslator):
     cx q0, q1;
     h q0;
     h q1;
-}}'''
+}}
+'''
 
-            self.code_openQASM.insert(4,custom_XX_gate)
+            self.code_openQASM.insert(5,custom_XX_gate)
             ParentTranslator.custom_XX = True
         
         gate_name = f"XX({angle})"
@@ -416,7 +442,7 @@ class GateTranslator(ParentTranslator):
     rz(theta) q0;
 }}'''
 
-            self.code_openQASM.insert(4,custom_RootPhase_gate)
+            self.code_openQASM.insert(5,custom_RootPhase_gate)
             ParentTranslator.custom_RootPhase = True
             
         #Calculate the final angle
@@ -481,7 +507,7 @@ class GateTranslator(ParentTranslator):
     h q1;
 }}'''
 
-            self.code_openQASM.insert(4,custom_iSWAP_gate)
+            self.code_openQASM.insert(5,custom_iSWAP_gate)
             ParentTranslator.custom_iSWAP = True
         
         gate_name = f"iSWAP"
@@ -508,7 +534,7 @@ class GateTranslator(ParentTranslator):
     rz(-pi/4) q0;
 }}'''
 
-            self.code_openQASM.insert(4,custom_HalfDeutsch_gate)
+            self.code_openQASM.insert(5,custom_HalfDeutsch_gate)
             ParentTranslator.custom_HalfDeutsch = True
         
         gate_name = f"HalfDeutsch({angle})"
@@ -533,7 +559,7 @@ class GateTranslator(ParentTranslator):
     cz q0, q1;   
 }}'''
 
-            self.code_openQASM.insert(4,custom_fSWAP_gate)
+            self.code_openQASM.insert(5,custom_fSWAP_gate)
             ParentTranslator.custom_fSWAP = True
         
         gate_name = f"fSWAP"
@@ -561,7 +587,10 @@ class GateTranslator(ParentTranslator):
         
         translation = ""
 
-        translation = f"{translation}{self.cbit_reg_name}{[*output]} = measure {self.qbit_reg_name}{[*target]};\n" 
+        # translation = f"{translation}{self.cbit_reg_name}{[*output]} = measure {self.qbit_reg_name}{[*target]};\n"
+        for i in range(len(target)):
+            translation = f"{translation}{self.cbit_reg_name}{[output[i]]} = measure {self.qbit_reg_name}{[target[i]]};\n"
+        
 
         translation = translation.rstrip('\n')
         return translation
@@ -580,81 +609,97 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
+
         gate = operation["gate"]
-        translation = f"gate {gate} "
+        translation = ""
 
-        if(len(c_targets) > 0):
-            return "Error: Openqasm does not support c_targets"
-        
-        for qbit in range(len(target)):
-            translation += f"{self.qbit_reg_name}{qbit}, "
+        if gate not in ParentTranslator.custom_gates:
 
-        translation = translation.rstrip(', ')
-        
-        translation += "{\n"
+            translation = f"gate {gate} "
 
-        for op in gate.get_operations():
-            if(op == "BARRIER"):
-                return "You can only use built-in gates in custom gates."
+            if(len(c_targets) > 0):
+                error = "OpenQASM does not support c_targets for custom gates: \n"
+                error += f"{operation}"
+                raise NotImplementedError(error)
                 
-            match(str(op["gate"])):
-                case "H":                    
-                    translation += "    " + self.translate_H(op, True) + "\n"
-                case "Y":                   
-                    translation += "    " + self.translate_Y(op, True) + "\n"
-                case "X":           
-                    translation += "    " + self.translate_X(op, True) + "\n"
-                case "Z":                    
-                    translation += "    " + self.translate_Z(op, True) + "\n"
-                case gate if gate.startswith("R("): 
-                    translation += "    " + self.translate_R(op, True) + "\n"
-                case gate if gate.startswith("U("):                    
-                    translation += "    " + self.translate_U(op, True) + "\n"
-                case gate if gate.startswith("P("):                    
-                    translation += "    " + self.translate_P(op, True) + "\n"
-                # case "XY":
-                #     gate_translator.translate_XY(operation)
-                case gate if gate.startswith("RY("):                    
-                    translation += "    " + self.translate_RY(op, True) + "\n"
-                case gate if gate.startswith("RX("):                    
-                    translation += "    " + self.translate_RX(op, True) + "\n"
-                case gate if gate.startswith("RZ("):                    
-                    translation += "    " + self.translate_RZ(op, True) + "\n"
-                case gate if gate.startswith("ZZ("):
-                    translation += "    " + self.translate_ZZ(op, True) + "\n"                
-                case gate if gate.startswith("U1("):                    
-                    translation += "    " + self.translate_U1(op, True) + "\n"
-                case gate if gate.startswith("U2("):                    
-                    translation += "    " + self.translate_U2(op, True) + "\n"
-                case gate if gate.startswith("U3("):                    
-                    translation += "    " + self.translate_U3(op, True) + "\n"
-                case gate if gate.startswith("XX("):
-                    translation += "    " + self.translate_XX(op, True) + "\n"
-                case gate if gate.startswith("YY("):
-                    translation += "    " + self.translate_YY(op, True) + "\n"
-                case gate if gate.startswith("RootPhase("):
-                    translation += "    " + self.translate_RootPhase(op, True) + "\n"
-                case "SWAP":
-                    translation += "    " + self.translate_SWAP(op, True) + "\n"
-                case "SqrtSWAP":
-                    translation += "    " + self.translate_SqrtSWAP(op, True) + "\n"
-                case "iSWAP":
-                    translation += "    " + self.translate_iSWAP(op, True) + "\n"
-                case "HalfDeutsch":
-                    translation += "    " + self.translate_HalfDeutsch(op, True) + "\n"
-                case "fSWAP":
-                    translation += "    " + self.translate_fSWAP(op, True) + "\n"
-                case "SqrtX":                    
-                    translation += "    " + self.translate_SqrtX(op, True) + "\n"
-                case "MEASURE":
-                    return "You can only use built-in gates in custom gates."                   
-                case _:
-                    #Le sumo translation después para que las inner custom salgan antes.               
-                    inside_custom_translation, inside_custom_call = self.translate_custom_gate(op, True) 
-                    translation = inside_custom_translation + "\n" + translation + inside_custom_call + "\n"
+            
+            for qbit in range(len(target)):
+                translation += f"{self.qbit_reg_name}{qbit}, "
+
+            translation = translation.rstrip(', ')
+            
+            translation += "{\n"
+
+            for op in gate.get_operations():
+                if(op == "BARRIER"):
+                    error = "OpenQASM does not support BARRIER for custom gates: \n"
+                    error += f"{operation}"
+                    raise NotImplementedError(error)
                     
-        
-        translation += "}\n"
+                match(str(op["gate"])):
+                    case "H":                    
+                        translation += "    " + self.translate_H(op, True) + "\n"
+                    case "Y":                   
+                        translation += "    " + self.translate_Y(op, True) + "\n"
+                    case "X":           
+                        translation += "    " + self.translate_X(op, True) + "\n"
+                    case "Z":                    
+                        translation += "    " + self.translate_Z(op, True) + "\n"
+                    case gate if gate.startswith("R("): 
+                        translation += "    " + self.translate_R(op, True) + "\n"
+                    case gate if gate.startswith("U("):                    
+                        translation += "    " + self.translate_U(op, True) + "\n"
+                    case gate if gate.startswith("P("):                    
+                        translation += "    " + self.translate_P(op, True) + "\n"
+                    case gate if gate.startswith("XY("):                    
+                        translation += "    " + self.translate_XY(op, True) + "\n"
+                    case gate if gate.startswith("RY("):                    
+                        translation += "    " + self.translate_RY(op, True) + "\n"
+                    case gate if gate.startswith("RX("):                    
+                        translation += "    " + self.translate_RX(op, True) + "\n"
+                    case gate if gate.startswith("RZ("):                    
+                        translation += "    " + self.translate_RZ(op, True) + "\n"
+                    case gate if gate.startswith("ZZ("):
+                        translation += "    " + self.translate_ZZ(op, True) + "\n"                
+                    case gate if gate.startswith("U1("):                    
+                        translation += "    " + self.translate_U1(op, True) + "\n"
+                    case gate if gate.startswith("U2("):                    
+                        translation += "    " + self.translate_U2(op, True) + "\n"
+                    case gate if gate.startswith("U3("):                    
+                        translation += "    " + self.translate_U3(op, True) + "\n"
+                    case gate if gate.startswith("XX("):
+                        translation += "    " + self.translate_XX(op, True) + "\n"
+                    case gate if gate.startswith("YY("):
+                        translation += "    " + self.translate_YY(op, True) + "\n"
+                    case gate if gate.startswith("RootPhase("):
+                        translation += "    " + self.translate_RootPhase(op, True) + "\n"
+                    case "SWAP":
+                        translation += "    " + self.translate_SWAP(op, True) + "\n"
+                    case "SqrtSWAP":
+                        translation += "    " + self.translate_SqrtSWAP(op, True) + "\n"
+                    case "iSWAP":
+                        translation += "    " + self.translate_iSWAP(op, True) + "\n"
+                    case "HalfDeutsch":
+                        translation += "    " + self.translate_HalfDeutsch(op, True) + "\n"
+                    case "fSWAP":
+                        translation += "    " + self.translate_fSWAP(op, True) + "\n"
+                    case "SqrtX":                    
+                        translation += "    " + self.translate_SqrtX(op, True) + "\n"
+                    case "MEASURE":
+                        error = "OpenQASM does not support MEASURE for custom gates: \n"
+                        error += f"{operation}"
+                        raise NotImplementedError(error)                  
+                    case _:
+                        #Le sumo translation después para que las inner custom salgan antes.               
+                        inside_custom_translation, inside_custom_call = self.translate_custom_gate(op, True) 
+                        translation = inside_custom_translation + "\n" + translation + "    " + inside_custom_call + "\n"
+                        
+            
+            translation += "}\n"
+
+            ParentTranslator.custom_gates[gate] = True
+
+
         if isCustom:
             custom_call = self.translate(operation["gate"], target, control, anticontrol, c_control, c_anticontrol, True)
         else:
