@@ -22,10 +22,11 @@ def get_dict(input_list):
     return dict(counts)
 
 i = 0
+
 codes = gates_codes.split("::")
 # codes = gate_operations_codes.split("::")
 # codes = deutsch_algorithm.split("::")
-print(qiskit.__version__)
+
 while i < len(codes):
     title = codes[i][:-2]
     amount_qubits = codes[i][-2]
@@ -39,8 +40,7 @@ while i < len(codes):
     # QSIMOV
     env = {}
     exec(code, env)
-    if "r" in title:
-        print(translator.to_openqasm(env["qc"]))
+    
     print("QSimov", get_dict(env["result_test"]))
     
 

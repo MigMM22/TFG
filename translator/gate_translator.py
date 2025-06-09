@@ -199,7 +199,10 @@ class GateTranslator(ParentTranslator):
         angle = str(operation["gate"]).replace("XY(", "").replace(")", "")
 
         if not ParentTranslator.custom_XY:
-            custom_XY_gate = f'''gate XY(theta, beta) q0, q1 {{
+            custom_XY_gate = f'''
+            gate sxdg q0 {{ rz(pi/2) q0; h q0; rz(pi/2) q0; }}
+
+            gate XY(theta, beta) q0, q1 {{
             rz(beta) q1;
             rz(-pi/2) q0;
             sx q0;
@@ -211,7 +214,7 @@ class GateTranslator(ParentTranslator):
             cx q0, q1;
             sdg q1;
             rz(-pi/2) q0;
-            sdg q0;
+            sxdg q0;
             rz(pi/2) q0;
             rz(-beta) q1;
 }}'''
@@ -324,13 +327,9 @@ class GateTranslator(ParentTranslator):
         c_anticontrol = operation["c_anticontrols"]
 
         angles = str(operation["gate"]).replace("U2(", "").replace(")", "")
-        # angles_part will now be "45,60,90"
-
-        # 2. Split the string by the comma "," delimiter:
+        
         angle_strings = angles.split(',')
-        # angle_strings will be a list: ['45', '60', '90']
-
-        # 3. Convert each angle string to an integer (or float if needed):
+        
         
         gate_name = f"u2({angle_strings[0]}, {angle_strings[1]})"
         
@@ -575,7 +574,7 @@ class GateTranslator(ParentTranslator):
         c_control = operation["c_controls"]
         c_anticontrol = operation["c_anticontrols"]
 
-        gate_name = f"pow(0.5) @ x"
+        gate_name = f"sx"
         
         translation = self.translate(gate_name, target, control, anticontrol, c_control, c_anticontrol, isCustom)
 
