@@ -20,7 +20,7 @@ qc.add_operation("H", targets=[0])
 qc.add_operation("BARRIER")
 
 qc.add_operation("YY(2)", targets = [0,1])
-qc.add_operation("ZZ(3)", targets = [0,1])
+qc.add_operation("XX(3)", targets = [0,1])
 qc.add_operation("ZZ(5)", targets = [0,1])
 qc.add_operation("HalfDeutsch(10)", targets=[0])
 qc.add_operation("sqrtSWAP", targets = [1,2], controls = 0)

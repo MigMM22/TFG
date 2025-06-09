@@ -1,3 +1,4 @@
+
 import qsimov as qj
 qa = qj.QGate(2, 0, "CustGate2")
 qa.add_operation("H", targets=1)
@@ -10,3 +11,9 @@ qg.add_operation("X", targets=[1])
 qc = qj.QCircuit(4, 3, "Teleportation", ancilla=(0, 0))
 qc.add_operation(qg, targets=[1,2,3])
 qc.add_operation("R(1,2)", targets = [0])
+
+
+
+
+
+
